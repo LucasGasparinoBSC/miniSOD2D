@@ -17,7 +17,7 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 312500
+	integer(4), parameter   :: nelem = 10000
 	integer(4), parameter   :: npoin = nelem * nnode
 	integer(4), allocatable :: connec(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
@@ -33,7 +33,7 @@ program main
 	! Loop variables
 	!
 	integer(4), parameter   :: nruns = 500
-	integer(4)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k
+	integer(4)              :: idime, ielem, inode, igaus, ipoin, iorder, jnode, i, j, k
 
 	!
 	! Case variables and residuals
@@ -52,11 +52,18 @@ program main
 	! Timing
 	!
 	real(8) :: tstart, tend, tconvec, tdiffu, tavg_convec, tavg_diffu, tmax_convec, tmax_diffu, tmin_convec, tmin_diffu
+	real(8) :: tconvec_r, tdiffu_r, tavg_convec_r, tavg_diffu_r, tmax_convec_r, tmax_diffu_r, tmin_convec_r, tmin_diffu_r
 
 	!
 	! MPI vars
 	!
 	integer(4) :: ierr, myrank, nprocs
+
+	!
+	! Reversed copy of arrays for Guis subs
+	!
+	integer(4), allocatable :: connec_r(:,:)
+	real(rp)  , allocatable :: u_r(:,:), q_r(:,:), Rmom_r(:,:), Dmom_r(:,:), dlxigp_ip_r(:,:,:)
 
 	!
 	! Initialize the MPI environment
@@ -335,6 +342,32 @@ program main
 	Pra = 1.0_rp
 
 	!
+	! Generate the reversed arrayys
+	!
+	allocate(connec_r(nnode,nelem))
+	allocate(u_r(ndime,npoin), q_r(ndime,npoin), Rmom_r(ndime,npoin))
+	!$acc enter data create(connec_r,u_r,q_r,Rmom_r)
+
+	! Copy connec to connec_r
+	!$acc parallel loop collapse(2) present(connec,connec_r)
+	do ielem = 1,nelem
+		do inode = 1,nnode
+			connec_r(inode,ielem) = connec(ielem,inode)
+		end do
+	end do
+	!$acc end parallel loop
+
+	! Copy u to u_r and q to q_r
+	!$acc parallel loop collapse(2) present(u,q,u_r,q_r)
+	do ipoin = 1,npoin
+		do idime = 1,ndime
+			u_r(idime,ipoin) = u(ipoin,idime)
+			q_r(idime,ipoin) = q(ipoin,idime)
+		end do
+	end do
+	!$acc end parallel loop
+
+	!
 	! Call the convective term multiple times
 	!
 	allocate(Rmass(npoin), Rmom(npoin,ndime), Rener(npoin))
@@ -347,6 +380,12 @@ program main
 	tmax_diffu = 0.0d0
 	tmin_convec = 1000000.0d0
 	tmin_diffu = 1000000.0d0
+	tavg_convec_r = 0.0d0
+	tavg_diffu_r = 0.0d0
+	tmax_convec_r = 0.0d0
+	tmax_diffu_r = 0.0d0
+	tmin_convec_r = 1000000.0d0
+	tmin_diffu_r = 1000000.0d0
 	call nvtxStartRange("Loop kernels")
 	do i = 1,nruns
 		call nvtxStartRange("Call convective term")
@@ -357,6 +396,15 @@ program main
 		tmax_convec = max(tmax_convec,tconvec)
 		tmin_convec = min(tmin_convec,tconvec)
 		tavg_convec = tavg_convec + tconvec
+		call nvtxEndRange
+		call nvtxStartRange("Call convec Guillaume")
+		tstart = MPI_Wtime()
+		call full_convec_ijk_guillaume(nelem,npoin,connec_r,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,AtoI,AtoJ,AtoK,u_r,q_r,rho,pr,E,Rmass,Rmom_r,Rener)
+		tend = MPI_Wtime()
+		tconvec_r = tend-tstart
+		tmax_convec_r = max(tmax_convec_r,tconvec_r)
+		tmin_convec_r = min(tmin_convec_r,tconvec_r)
+		tavg_convec_r = tavg_convec_r + tconvec_r
 		call nvtxEndRange
 		call nvtxStartRange("Call diffusive term")
 		tstart = MPI_Wtime()
@@ -376,27 +424,32 @@ program main
 	! Write avg times to screen
 	!
 	tavg_convec = tavg_convec / real(nruns,8)
+	tavg_convec_r = tavg_convec_r / real(nruns,8)
 	tavg_diffu = tavg_diffu / real(nruns,8)
 
 	write(*,*)
 	write(*,*) 'Timings:'
 	write(*,*) '----------------------------------------'
-	write(*,*) 'Avg. convective time = ', tavg_convec
-	write(*,*) 'Avg. diffusive time  = ', tavg_diffu
-	write(*,*) 'Max. convective time = ', tmax_convec
-	write(*,*) 'Max. diffusive time  = ', tmax_diffu
-	write(*,*) 'Min. convective time = ', tmin_convec
-	write(*,*) 'Min. diffusive time  = ', tmin_diffu
+	write(*,*) 'Avg. convective time   = ', tavg_convec
+	write(*,*) 'Avg. convective_r time = ', tavg_convec_r
+	write(*,*) 'Avg. diffusive time    = ', tavg_diffu
+	write(*,*) 'Max. convective time   = ', tmax_convec
+	write(*,*) 'Max. convective_r time = ', tmax_convec_r
+	write(*,*) 'Max. diffusive time    = ', tmax_diffu
+	write(*,*) 'Min. convective time   = ', tmin_convec
+	write(*,*) 'Min. convective_r time = ', tmin_convec_r
+	write(*,*) 'Min. diffusive time    = ', tmin_diffu
 	write(*,*) '----------------------------------------'
-	write(*,*) 'Variation convec.    = ', (tmax_convec-tmin_convec)/tavg_convec
-	write(*,*) 'Variation diffu.     = ', (tmax_diffu-tmin_diffu)/tavg_diffu
+	write(*,*) 'Variation convec.      = ', (tmax_convec-tmin_convec)/tavg_convec
+	write(*,*) 'Variation convec_r.    = ', (tmax_convec_r-tmin_convec_r)/tavg_convec_r
+	write(*,*) 'Variation diffu.       = ', (tmax_diffu-tmin_diffu)/tavg_diffu
 	write(*,*) '----------------------------------------'
 
 	!
 	! Print minimal results set
 	!
 	call nvtxStartRange("Update host results")
-	!$acc update host(Rmass,Rmom,Rener,Dmass,Dmom,Dener)
+	!$acc update host(Rmass,Rmom,Rmom_r,Rener,Dmass,Dmom,Dener)
 	call nvtxEndRange
 	write(*,*)
 	write(*,*) 'Basic results:'
@@ -405,6 +458,9 @@ program main
 	write(*,*) 'Max Rmom(:,1) = ', maxval(Rmom(:,1)), 'Min Rmom(:,1) = ', minval(Rmom(:,1))
 	write(*,*) 'Max Rmom(:,2) = ', maxval(Rmom(:,2)), 'Min Rmom(:,2) = ', minval(Rmom(:,2))
 	write(*,*) 'Max Rmom(:,3) = ', maxval(Rmom(:,3)), 'Min Rmom(:,3) = ', minval(Rmom(:,3))
+	write(*,*) 'Max Rmom_r(1,:) = ', maxval(Rmom_r(1,:)), 'Min Rmom_r(1,:) = ', minval(Rmom_r(1,:))
+	write(*,*) 'Max Rmom_r(2,:) = ', maxval(Rmom_r(2,:)), 'Min Rmom_r(2,:) = ', minval(Rmom_r(2,:))
+	write(*,*) 'Max Rmom_r(3,:) = ', maxval(Rmom_r(3,:)), 'Min Rmom_r(3,:) = ', minval(Rmom_r(3,:))
 	write(*,*) 'Max Rener     = ', maxval(Rener)    , 'Min Rener     = ', minval(Rener)
 	write(*,*) '----------------------------------------'
 	write(*,*) 'Max Dmass     = ', maxval(Dmass)    , 'Min Dmass     = ', minval(Dmass)
