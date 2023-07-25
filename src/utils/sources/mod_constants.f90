@@ -13,7 +13,7 @@ module mod_constants
 	!
 	! Element characteristics
 	!
-	integer(4), parameter :: porder=4
+	integer(4), parameter :: porder=6
 	integer(4), parameter :: nnode=(porder+1)**3
 	integer(4), parameter :: ngaus=nnode
 	integer(4), parameter :: npbou=(porder+1)**2

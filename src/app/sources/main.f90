@@ -17,7 +17,7 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 10000
+	integer(4), parameter   :: nelem = 1000
 	integer(4), parameter   :: npoin = nelem * nnode
 	integer(4), allocatable :: connec(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
@@ -32,7 +32,7 @@ program main
 	!
 	! Loop variables
 	!
-	integer(4), parameter   :: nruns = 500
+	integer(4), parameter   :: nruns = 100
 	integer(4)              :: idime, ielem, inode, igaus, ipoin, iorder, jnode, i, j, k
 
 	!
@@ -400,6 +400,7 @@ program main
 		call nvtxStartRange("Call convec Guillaume")
 		tstart = MPI_Wtime()
 		call full_convec_ijk_guillaume(nelem,npoin,connec_r,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,AtoI,AtoJ,AtoK,u_r,q_r,rho,pr,E,Rmass,Rmom_r,Rener)
+		!call full_convec_ijk_connecr(nelem,npoin,connec_r,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,AtoI,AtoJ,AtoK,u,q,rho,pr,E,Rmass,Rmom,Rener)
 		tend = MPI_Wtime()
 		tconvec_r = tend-tstart
 		tmax_convec_r = max(tmax_convec_r,tconvec_r)
@@ -414,7 +415,8 @@ program main
 		tmax_diffu = max(tmax_diffu,tdiffu)
 		tmin_diffu = min(tmin_diffu,tdiffu)
 		tavg_diffu = tavg_diffu + tdiffu
-		write(1,*) i, tconvec, tdiffu
+		write(1,10) i, tconvec, tconvec_r, tdiffu, tmax_convec, tmax_convec_r, tmax_diffu
+10      format(I3,6(2X,F12.10))
 		call nvtxEndRange
 	end do
 	call nvtxEndRange

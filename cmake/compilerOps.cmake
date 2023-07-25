@@ -109,9 +109,9 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "NVHPC" OR CMAKE_C_COMPILER_ID STREQUAL "PGI
 			set(CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS} "-gpu=cc70,cuda10.2,lineinfo -cuda -acc")
 		else()
 			message("IMPORTANT: Verify the device compute capability!!!")
-			set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-gpu=cc86,lineinfo -cuda -acc")
-			set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-gpu=cc86,lineinfo -cuda -acc")
-			set(CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS} "-gpu=cc86,lineinfo -cuda -acc")
+			set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-gpu=cc61,lineinfo -cuda -acc")
+			set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-gpu=cc61,lineinfo -cuda -acc")
+			set(CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS} "-gpu=cc61,lineinfo -cuda -acc")
 		endif()
 	else()
 		#NVIDIA COMPILERS WITHOUT GPUs
