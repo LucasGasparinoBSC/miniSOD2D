@@ -17,9 +17,9 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 10000
+	integer(4), parameter   :: nelem = 2000
 	integer(4), parameter   :: npoin = nelem * nnode
-	integer(4), allocatable :: connec(:,:)
+	integer(4), allocatable :: connec(:,:), connec_r(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
 
 	!
@@ -341,6 +341,19 @@ program main
 	Pra = 1.0_rp
 
 	!
+	! Compute a  reversed connec
+	!
+	allocate(connec_r(nnode,nelem))
+	!$acc enter data create(connec_r)
+	!$acc parallel loop collapse(2) present(connec,connec_r)
+	do ielem = 1,nelem
+		do inode = 1,nnode
+			connec_r(inode,ielem) = connec(ielem,inode)
+		end do
+	end do
+	!$acc end parallel loop
+
+	!
 	! Call the convective term multiple times
 	!
 	allocate(Rmass(npoin), Rmom(npoin,ndime), Rener(npoin))
@@ -371,6 +384,7 @@ program main
 		call nvtxStartRange("Call convec vari1")
 		tstart = MPI_Wtime()
 		call full_convec_ijk_vari1(nelem,npoin,connec,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,AtoI,AtoJ,AtoK,u,q,rho,pr,E,Rmass,Rmom_v1,Rener)
+		!call full_convec_ijk_vari2(nelem,npoin,connec_r,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,AtoI,AtoJ,AtoK,u,q,rho,pr,E,Rmass,Rmom_v1,Rener)
 		tend = MPI_Wtime()
 		tconvec_vari1 = tend-tstart
 		tmax_convec_vari1 = max(tmax_convec_vari1,tconvec_vari1)
@@ -421,7 +435,7 @@ program main
 	! Print minimal results set
 	!
 	call nvtxStartRange("Update host results")
-	!$acc update host(Rmass,Rmom,Rener,Dmass,Dmom,Dener)
+	!$acc update host(Rmass,Rmom,Rener,Dmass,Dmom,Dener,Rmom_v1)
 	call nvtxEndRange
 	write(*,*)
 	write(*,*) 'Basic results:'
