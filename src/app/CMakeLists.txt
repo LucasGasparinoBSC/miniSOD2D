@@ -1,12 +1,12 @@
 project(miniSOD2D)
 
-if(SHARED_LIBS)
+if(SHARED_LIBS STREQUAL "ON")
     file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_LIST_DIR}/*.f90)
 else()
-    file(GLOB_RECURSE SRC_FILES ${CMAKE_SOURCE_DIR}/src/utils/*.f90,
-                                ${CMAKE_SOURCE_DIR}/src/geometry/*.f90,
-                                ${CMAKE_SOURCE_DIR}/src/fem/*.f90,
-                                ${CMAKE_SOURCE_DIR}/src/kernels/*.f90,
+    file(GLOB_RECURSE SRC_FILES ${CMAKE_SOURCE_DIR}/src/utils/sources/*.f90
+                                ${CMAKE_SOURCE_DIR}/src/geometry/sources/*.f90
+                                ${CMAKE_SOURCE_DIR}/src/fem/sources/*.f90
+                                ${CMAKE_SOURCE_DIR}/src/kernels/sources/*.f90
                                 ${CMAKE_CURRENT_LIST_DIR}/*.f90)
 endif()
 
