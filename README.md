@@ -67,5 +67,3 @@ Trying to run with more than 1 processor will crash the app. If the app has been
 ## Adding libraries
 
 Through the `CMake` infrastructure, it is possible to add libraries to the project. For examples on how to do so, check the `CMakeLists.txt` files in the `src` and `utils` directories. The `CMake` documentation is also a good resource for this.
-
-test commit.

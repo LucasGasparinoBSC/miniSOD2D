@@ -1,14 +1,22 @@
 project(miniSOD2D)
 
-file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_LIST_DIR}/*.f90)
-
-include_directories(${libfortran_INCLUDE_DIRS})
+if(SHARED_LIBS)
+    file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_LIST_DIR}/*.f90)
+else()
+    file(GLOB_RECURSE SRC_FILES ${CMAKE_SOURCE_DIR}/src/utils/*.f90,
+                                ${CMAKE_SOURCE_DIR}/src/geometry/*.f90,
+                                ${CMAKE_SOURCE_DIR}/src/fem/*.f90,
+                                ${CMAKE_SOURCE_DIR}/src/kernels/*.f90,
+                                ${CMAKE_CURRENT_LIST_DIR}/*.f90)
+endif()
 
 add_definitions(-D__BUILD_VERSION__="${TEST_VERSION}")
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
-target_link_libraries(${PROJECT_NAME} tmu_utils tmu_geometry tmu_fem tmu_kernels)
+if(SHARED_LIBS)
+    target_link_libraries(${PROJECT_NAME} tmu_utils tmu_geometry tmu_fem tmu_kernels)
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "miniSOD" VERSION ${TEST_VERSION} SOVERSION ${TEST_VERSION_MAJOR})
 
