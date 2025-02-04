@@ -412,14 +412,6 @@
                !
                ! Final assembly
                !
-               !$acc loop vector collapse(2)
-               do idime = 1,ndime
-                  do inode = 1,nnode
-                     !$acc atomic update
-                     Rmom(ipoin(inode),idime) = Rmom(ipoin(inode),idime)+Re_mom(inode,idime)
-                     !$acc end atomic
-                  end do
-               end do
                !$acc loop vector
                do inode = 1,nnode
                   !$acc atomic update
@@ -428,6 +420,12 @@
                   !$acc atomic update
                   Rener(ipoin(inode)) = Rener(ipoin(inode))+Re_ener(inode)
                   !$acc end atomic
+                  !$acc loop seq
+                  do idime = 1,ndime
+                     !$acc atomic update
+                     Rmom(ipoin(inode),idime) = Rmom(ipoin(inode),idime)+Re_mom(inode,idime)
+                     !$acc end atomic
+                  end do
                end do
             end do
             !$acc end parallel loop
@@ -663,9 +661,10 @@
                !
                ! Final assembly
                !
-               !$acc loop vector collapse(2)
-               do idime = 1,ndime
-                  do inode = 1,nnode
+               !$acc loop vector
+               do inode = 1,nnode
+               !$acc loop seq
+                  do idime = 1,ndime
                      !$acc atomic update
                      Rmom(ipoin(inode),idime) = Rmom(ipoin(inode),idime)+Re_mom(inode,idime)
                      !$acc end atomic
