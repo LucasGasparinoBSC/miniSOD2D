@@ -230,43 +230,32 @@
                !$acc loop vector
                do inode = 1,nnode
                   ipoin(inode) = connec(ielem,inode)
-               end do
-               !$acc loop vector 
-               do inode = 1,nnode
                   kl(inode) = 0.0_rp
                   !$acc loop seq
                   do idime = 1,ndime
                      kl(inode) = kl(inode) + u(ipoin(inode),idime)*u(ipoin(inode),idime)*0.5_rp
                   end do
-               end do
-               !$acc loop vector collapse(2)
-               do idime = 1,ndime
-                  do inode = 1,nnode
+                  !$acc loop seq
+                  do idime = 1,ndime
+                     rhol(inode) = rho(ipoin(inode))
+                     El(inode) = E(ipoin(inode))
+                     REl(inode) = rhol(inode)*El(inode)
+                     Rkl(inode) = rhol(inode)*kl(inode)
+                     prl(inode) = pr(ipoin(inode))
                      ul(inode,idime) = u(ipoin(inode),idime)
                      ql(inode,idime) = q(ipoin(inode),idime)
-                     fel(inode,idime) = rho(ipoin(inode))*E(ipoin(inode))*u(ipoin(inode),idime)
-                     fuel(inode,idime) = E(ipoin(inode))*u(ipoin(inode),idime)
-                     fkl(inode,idime) = rho(ipoin(inode))*kl(inode)*u(ipoin(inode),idime)
-                     fukl(inode,idime) = kl(inode)*u(ipoin(inode),idime)
-                  end do
-               end do
-               !$acc loop vector collapse(3)
-               do idime = 1,ndime
-                  do jdime = 1,ndime
-                     do inode = 1,nnode
+                     fel(inode,idime) = rhol(inode)*El(inode)*ul(inode,idime)
+                     fuel(inode,idime) = El(inode)*ul(inode,idime)
+                     fkl(inode,idime) = rhol(inode)*kl(inode)*ul(inode,idime)
+                     fukl(inode,idime) = kl(inode)*ul(inode,idime)
+                     !$acc loop seq
+                     do jdime = 1,ndime
                         fl(inode,idime,jdime)  = q(ipoin(inode),idime)*u(ipoin(inode),jdime)
                         fuul(inode,idime,jdime)  = u(ipoin(inode),idime)*u(ipoin(inode),jdime)
                      end do
                   end do
                end do
-               !$acc loop vector
-               do inode = 1,nnode
-                  rhol(inode) = rho(ipoin(inode))
-                  El(inode) = E(ipoin(inode))
-                  REl(inode) = rho(ipoin(inode))*E(ipoin(inode))
-                  Rkl(inode) = rho(ipoin(inode))*kl(inode)
-                  prl(inode) = pr(ipoin(inode))
-               end do
+
                !$acc loop vector private(dlxi_ip,dleta_ip,dlzeta_ip, gradIsoRho,gradIsoP,gradIsoRE,gradIsoRk, gradIsoE, gradIsok,gradIsoU, gradIsoF, gradIsoFuu, gradIsoQ, gradIsoFe,gradIsoFue,gradIsoFk,gradIsoFuk,gradRho,gradP,gradE,gradRE,gradk,gradRk,gradU,divF,divU,divQ,divFe,divFue,divFk,divFuk,gradQ,divFuu)
                do igaus = 1,ngaus
                   !$acc loop seq
