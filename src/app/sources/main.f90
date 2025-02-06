@@ -18,7 +18,7 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 4*6000
+	integer(4), parameter   :: nelem = 4*48000
 	integer(4), parameter   :: npoin = nelem * nnode
 	integer(4), allocatable :: connec(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
@@ -39,7 +39,8 @@ program main
 	!
 	! Case variables and residuals
 	!
-	real(rp),   allocatable :: u(:,:), q(:,:), rho(:), pr(:), E(:), Tem(:)
+	real(rp)                :: fmag
+	real(rp),   allocatable :: u(:,:), q(:,:), rho(:), pr(:), E(:), Tem(:), eint(:)
 	real(rp),   allocatable :: Rmass(:), Rmom(:,:), Rener(:)
 	real(rp),   allocatable :: Dmass(:), Dmom(:,:), Dener(:)
 
@@ -48,6 +49,7 @@ program main
 	!
 	real(rp)                :: Cp, Pra
 	real(rp),   allocatable :: mu_fluid(:), mu_e(:,:), mu_sgs(:,:)
+	real(rp), parameter     :: gamma = 1.4_rp, Rgas = 287.0_rp
 
 	!
 	! Timing
@@ -315,10 +317,10 @@ program main
 	!
 	! Generate initial conditions
 	!
-	allocate(u(npoin,ndime), q(npoin,ndime), rho(npoin), pr(npoin), E(npoin), Tem(npoin))
+	allocate(u(npoin,ndime), q(npoin,ndime), rho(npoin), pr(npoin), E(npoin), Tem(npoin), eint(npoin))
 	allocate(mu_fluid(npoin), mu_e(nelem,nnode), mu_sgs(nelem,nnode))
 	call nvtxStartRange("Alloc GPU initial conditions")
-	!$acc enter data create(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
+	!$acc enter data create(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs,eint)
 	call nvtxEndRange
 	call nvtxStartRange("Generate initial conditions")
 	!$acc kernels present(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
@@ -340,19 +342,24 @@ program main
 			u(connec(ielem,4),:) = 20.0_rp
 			rho(connec(ielem,1)) = 10.0_rp
 			rho(connec(ielem,4)) = 20.0_rp
-			pr(connec(ielem,1))  = 10.0_rp
-			E(connec(ielem,1))   = 10.0_rp
-			Tem(connec(ielem,1))   = 10.0_rp
+			pr(connec(ielem,1))  = 100.0_rp
+			pr(connec(ielem,4))  = 200.0_rp
 		end do
 		!$acc end kernels
 
-		!$acc parallel loop collapse(2)
+		!$acc parallel loop gang vector
 		do ipoin = 1,npoin
+			fmag = 0.0_rp
+			!$acc loop seq
 			do idime = 1,ndime
 				q(ipoin,idime) = rho(ipoin)*u(ipoin,idime)
+				fmag = fmag + q(ipoin,idime)*u(ipoin,idime)
 			end do
+			eint(ipoin) = pr(ipoin)/((gamma-1.0_rp)*rho(ipoin))
+			E(ipoin) = rho(ipoin)*eint(ipoin) + 0.5_rp*fmag
+			Tem(ipoin) = pr(ipoin)/(rho(ipoin)*Rgas)
 		end do
-		!$acc end parallel loop
+		!!$acc end parallel loop
 
 	!
 	! Generate TET04 data

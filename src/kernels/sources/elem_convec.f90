@@ -211,11 +211,11 @@
             real(rp),    intent(out) :: Rener(npoin)
             integer(4)              :: ielem, igaus, idime, jdime, inode, isoI, isoJ, isoK,kdime,ii
             integer(4)              :: ipoin(nnode)
-            real(rp)                 :: Re_mom(nnode,ndime), invRho(npoin), invRhoL(nnode)
-            real(rp)                 :: Re_mass(nnode), Re_ener(nnode),aux
+            real(rp)                 :: Re_mom(nnode,ndime)
+            real(rp)                 :: Re_mass(nnode), Re_ener(nnode),aux, auxFl
             real(rp)                 :: gradIsoRho(ndime),gradIsoP(ndime), gradIsoE(ndime),gradIsoU(ndime,ndime), gradIsoF(ndime,ndime,ndime), gradIsoQ(ndime,ndime), gradIsoFe(ndime,ndime),gradIsoRE(ndime),gradIsoFue(ndime,ndime), gradIsok(ndime),gradIsoRk(ndime),gradIsoFuk(ndime,ndime),gradIsoFk(ndime,ndime)
             real(rp)                 :: gradRho(ndime),gradP(ndime),gradE(ndime),gradU(ndime,ndime),divF(ndime),divU,divFe,divQ,gradQ(ndime,ndime),gradIsoFuu(ndime,ndime,ndime),gradRE(ndime),divFue,gradk(ndime),divFk,gradRk(ndime),divFuk
-            real(rp)                 :: ul(nnode,ndime), ql(nnode,ndime), rhol(nnode), prl(nnode),El(nnode),fel(nnode,ndime),fl(nnode,ndime,ndime),fuul(nnode,ndime,ndime),divFuu(ndime),REl(nnode),fuel(nnode,ndime),kl(nnode),fkl(nnode,ndime),fukl(nnode,ndime),Rkl(nnode)
+            real(rp)                 :: ul(nnode,ndime), ql(nnode,ndime), rhol(nnode), prl(nnode),El(nnode),fel(nnode,ndime),divFuu(ndime),REl(nnode),fuel(nnode,ndime),kl(nnode),fkl(nnode,ndime),fukl(nnode,ndime),Rkl(nnode)
             real(rp), dimension(porder+1) :: dlxi_ip, dleta_ip, dlzeta_ip
 
             call nvtxStartRange("Full convection")
@@ -223,10 +223,9 @@
             Rmom(:,:) = 0.0_rp
             Rmass(:) = 0.0_rp
             Rener(:) = 0.0_rp
-            invRho(:) = 1.0_rp/rho(:)
             !$acc end kernels
 
-            !$acc parallel loop gang private(ipoin,Re_ener,Re_mass,Re_mom,ul,ql,rhol,invRhoL,prl,El,REl,fl,fel,fuel,kl,Rkl,fkl,fukl) !!vector_length(vecLength)
+            !$acc parallel loop gang private(ipoin,Re_ener,Re_mass,Re_mom,ul,ql,rhol,prl,El,REl,kl,Rkl) !!vector_length(vecLength)
             do ielem = 1,nelem
                !$acc loop vector
                do inode = 1,nnode
@@ -237,7 +236,6 @@
                      kl(inode) = kl(inode) + u(ipoin(inode),idime)*u(ipoin(inode),idime)*0.5_rp
                   end do
                   rhol(inode) = rho(ipoin(inode))
-                  invRhoL(inode) = invRho(ipoin(inode))
                   El(inode) = E(ipoin(inode))
                   REl(inode) = rhol(inode)*El(inode)
                   Rkl(inode) = rhol(inode)*kl(inode)
@@ -246,28 +244,26 @@
                   do idime = 1,ndime
                      ul(inode,idime) = u(ipoin(inode),idime)
                      ql(inode,idime) = q(ipoin(inode),idime)
-                     fel(inode,idime) = rhol(inode)*El(inode)*ul(inode,idime)
-                     fuel(inode,idime) = El(inode)*ul(inode,idime)
-                     fkl(inode,idime) = rhol(inode)*kl(inode)*ul(inode,idime)
-                     fukl(inode,idime) = kl(inode)*ul(inode,idime)
-                     !$acc loop seq
-                     do jdime = 1,ndime
-                        fl(inode,idime,jdime)  = q(ipoin(inode),idime)*u(ipoin(inode),jdime)
-                     end do
+                     !fel(inode,idime) = rhol(inode)*El(inode)*ul(inode,idime)
+                     !fuel(inode,idime) = El(inode)*ul(inode,idime)
+                     !fkl(inode,idime) = rhol(inode)*kl(inode)*ul(inode,idime)
+                     !fukl(inode,idime) = kl(inode)*ul(inode,idime)
                   end do
                end do
 
                !$acc loop vector private(dlxi_ip,dleta_ip,dlzeta_ip, gradIsoRho,gradIsoP,gradIsoRE,gradIsoRk, gradIsoE, gradIsok,gradIsoU, gradIsoF,gradIsoFuu, gradIsoQ, gradIsoFe,gradIsoFue,gradIsoFk,gradIsoFuk,gradRho,gradP,gradE,gradRE,gradk,gradRk,gradU,divF,divU,divQ,divFe,divFue,divFk,divFuk,gradQ,divFuu)
                do igaus = 1,ngaus
+
+                  isoI = gmshAtoI(igaus) 
+                  isoJ = gmshAtoJ(igaus) 
+                  isoK = gmshAtoK(igaus) 
+
                   !$acc loop seq
                   do ii=1,porder+1
                      dlxi_ip(ii) = dlxigp_ip(igaus,1,ii)
                      dleta_ip(ii) = dlxigp_ip(igaus,2,ii)
                      dlzeta_ip(ii) = dlxigp_ip(igaus,3,ii)
                   end do
-                  isoI = gmshAtoI(igaus) 
-                  isoJ = gmshAtoJ(igaus) 
-                  isoK = gmshAtoK(igaus) 
 
                   gradIsoRho(:) = 0.0_rp
                   gradIsoP(:) = 0.0_rp
@@ -319,30 +315,30 @@
                         gradIsoQ(idime,2) = gradIsoQ(idime,2) + dleta_ip(ii)*ql(invAtoIJK(isoI,ii,isoK),idime)
                         gradIsoQ(idime,3) = gradIsoQ(idime,3) + dlzeta_ip(ii)*ql(invAtoIJK(isoI,isoJ,ii),idime)
 
-                        gradIsoFe(idime,1) = gradIsoFe(idime,1) + dlxi_ip(ii)*fel(invAtoIJK(ii,isoJ,isoK),idime)
-                        gradIsoFe(idime,2) = gradIsoFe(idime,2) + dleta_ip(ii)*fel(invAtoIJK(isoI,ii,isoK),idime)
-                        gradIsoFe(idime,3) = gradIsoFe(idime,3) + dlzeta_ip(ii)*fel(invAtoIJK(isoI,isoJ,ii),idime)
+                        gradIsoFe(idime,1) = gradIsoFe(idime,1) + dlxi_ip(ii)*rhol(invAtoIJK(ii,isoJ,isoK))*El(invAtoIJK(ii,isoJ,isoK))*ul(invAtoIJK(ii,isoJ,isoK),idime)
+                        gradIsoFe(idime,2) = gradIsoFe(idime,2) + dleta_ip(ii)*rhol(invAtoIJK(isoI,ii,isoK))*El(invAtoIJK(isoI,ii,isoK))*ul(invAtoIJK(isoI,ii,isoK),idime)
+                        gradIsoFe(idime,3) = gradIsoFe(idime,3) + dlzeta_ip(ii)*rhol(invAtoIJK(isoI,isoJ,ii))*El(invAtoIJK(isoI,isoJ,ii))*ul(invAtoIJK(isoI,isoJ,ii),idime)
 
-                        gradIsoFue(idime,1) = gradIsoFue(idime,1) + dlxi_ip(ii)*fuel(invAtoIJK(ii,isoJ,isoK),idime)
-                        gradIsoFue(idime,2) = gradIsoFue(idime,2) + dleta_ip(ii)*fuel(invAtoIJK(isoI,ii,isoK),idime)
-                        gradIsoFue(idime,3) = gradIsoFue(idime,3) + dlzeta_ip(ii)*fuel(invAtoIJK(isoI,isoJ,ii),idime)
+                        gradIsoFue(idime,1) = gradIsoFue(idime,1) + dlxi_ip(ii)*El(invAtoIJK(ii,isoJ,isoK))*ul(invAtoIJK(ii,isoJ,isoK),idime)
+                        gradIsoFue(idime,2) = gradIsoFue(idime,2) + dleta_ip(ii)*El(invAtoIJK(isoI,ii,isoK))*ul(invAtoIJK(isoI,ii,isoK),idime)
+                        gradIsoFue(idime,3) = gradIsoFue(idime,3) + dlzeta_ip(ii)*El(invAtoIJK(isoI,isoJ,ii))*ul(invAtoIJK(isoI,isoJ,ii),idime)
 
-                        gradIsoFk(idime,1) = gradIsoFk(idime,1) + dlxi_ip(ii)*fkl(invAtoIJK(ii,isoJ,isoK),idime)
-                        gradIsoFk(idime,2) = gradIsoFk(idime,2) + dleta_ip(ii)*fkl(invAtoIJK(isoI,ii,isoK),idime)
-                        gradIsoFk(idime,3) = gradIsoFk(idime,3) + dlzeta_ip(ii)*fkl(invAtoIJK(isoI,isoJ,ii),idime)
+                        gradIsoFk(idime,1) = gradIsoFk(idime,1) + dlxi_ip(ii)*rhol(invAtoIJK(ii,isoJ,isoK))*kl(invAtoIJK(ii,isoJ,isoK))*ul(invAtoIJK(ii,isoJ,isoK),idime)
+                        gradIsoFk(idime,2) = gradIsoFk(idime,2) + dleta_ip(ii)*rhol(invAtoIJK(isoI,ii,isoK))*kl(invAtoIJK(isoI,ii,isoK))*ul(invAtoIJK(isoI,ii,isoK),idime)
+                        gradIsoFk(idime,3) = gradIsoFk(idime,3) + dlzeta_ip(ii)*rhol(invAtoIJK(isoI,isoJ,ii))*kl(invAtoIJK(isoI,isoJ,ii))*ul(invAtoIJK(isoI,isoJ,ii),idime)
 
-                        gradIsoFuk(idime,1) = gradIsoFuk(idime,1) + dlxi_ip(ii)*fukl(invAtoIJK(ii,isoJ,isoK),idime)
-                        gradIsoFuk(idime,2) = gradIsoFuk(idime,2) + dleta_ip(ii)*fukl(invAtoIJK(isoI,ii,isoK),idime)
-                        gradIsoFuk(idime,3) = gradIsoFuk(idime,3) + dlzeta_ip(ii)*fukl(invAtoIJK(isoI,isoJ,ii),idime)
+                        gradIsoFuk(idime,1) = gradIsoFuk(idime,1) + dlxi_ip(ii)*kl(invAtoIJK(ii,isoJ,isoK))*ul(invAtoIJK(ii,isoJ,isoK),idime)
+                        gradIsoFuk(idime,2) = gradIsoFuk(idime,2) + dleta_ip(ii)*kl(invAtoIJK(isoI,ii,isoK))*ul(invAtoIJK(isoI,ii,isoK),idime)
+                        gradIsoFuk(idime,3) = gradIsoFuk(idime,3) + dlzeta_ip(ii)*kl(invAtoIJK(isoI,isoJ,ii))*ul(invAtoIJK(isoI,isoJ,ii),idime)
 
                         !$acc loop seq
                         do jdime=1, ndime
-                            gradIsoF(idime,jdime,1) = gradIsoF(idime,jdime,1) + dlxi_ip(ii)*fl(invAtoIJK(ii,isoJ,isoK),idime,jdime)
-                            gradIsoF(idime,jdime,2) = gradIsoF(idime,jdime,2) + dleta_ip(ii)*fl(invAtoIJK(isoI,ii,isoK),idime,jdime)
-                            gradIsoF(idime,jdime,3) = gradIsoF(idime,jdime,3) + dlzeta_ip(ii)*fl(invAtoIJK(isoI,isoJ,ii),idime,jdime)
-                            gradIsoFuu(idime,jdime,1) = gradIsoFuu(idime,jdime,1) + dlxi_ip(ii)*fl(invAtoIJK(ii,isoJ,isoK),idime,jdime)*invRhoL(invAtoIJK(ii,isoJ,isoK))
-                            gradIsoFuu(idime,jdime,2) = gradIsoFuu(idime,jdime,2) + dleta_ip(ii)*fl(invAtoIJK(isoI,ii,isoK),idime,jdime)*invRhoL(invAtoIJK(isoI,ii,isoK))
-                            gradIsoFuu(idime,jdime,3) = gradIsoFuu(idime,jdime,3) + dlzeta_ip(ii)*fl(invAtoIJK(isoI,isoJ,ii),idime,jdime)*invRhoL(invAtoIJK(isoI,isoJ,ii))
+                            gradIsoF(idime,jdime,1) = gradIsoF(idime,jdime,1) + dlxi_ip(ii)*ql(invAtoIJK(ii,isoJ,isoK),idime)*ul(invAtoIJK(ii,isoJ,isoK),jdime)
+                            gradIsoF(idime,jdime,2) = gradIsoF(idime,jdime,2) + dleta_ip(ii)*ql(invAtoIJK(isoI,ii,isoK),idime)*ul(invAtoIJK(isoI,ii,isoK),jdime)
+                            gradIsoF(idime,jdime,3) = gradIsoF(idime,jdime,3) + dlzeta_ip(ii)*ql(invAtoIJK(isoI,isoJ,ii),idime)*ul(invAtoIJK(isoI,isoJ,ii),jdime)
+                            gradIsoFuu(idime,jdime,1) = gradIsoFuu(idime,jdime,1) + dlxi_ip(ii)*ul(invAtoIJK(ii,isoJ,isoK),idime)*ul(invAtoIJK(ii,isoJ,isoK),jdime)
+                            gradIsoFuu(idime,jdime,2) = gradIsoFuu(idime,jdime,2) + dleta_ip(ii)*ul(invAtoIJK(isoI,ii,isoK),idime)*ul(invAtoIJK(isoI,ii,isoK),jdime)
+                            gradIsoFuu(idime,jdime,3) = gradIsoFuu(idime,jdime,3) + dlzeta_ip(ii)*ul(invAtoIJK(isoI,isoJ,ii),idime)*ul(invAtoIJK(isoI,isoJ,ii),jdime)
                         end do
                      end do
                   end do
@@ -378,7 +374,6 @@
                          divFuk = divFuk + He(idime,jdime,igaus,ielem) * gradIsoFuk(idime,jdime)
                          !$acc loop seq
                          do kdime=1,ndime
-                            !aux = gradIsoF(idime,jdime,kdime)/rhol(igaus)
                             gradU(idime,jdime) = gradU(idime,jdime) + He(jdime,kdime,igaus,ielem) * gradIsoU(idime,kdime)
                             gradQ(idime,jdime) = gradQ(idime,jdime) + He(jdime,kdime,igaus,ielem) * gradIsoQ(idime,kdime)
                             divF(idime) = divF(idime) + He(jdime,kdime,igaus,ielem)*gradIsoF(idime,jdime,kdime)
@@ -401,7 +396,8 @@
                                                                 fukl(igaus,idime)*gradRho(idime)) 
                      !$acc loop seq
                      do jdime=1, ndime
-                        aux = fl(igaus,idime,jdime)*invRhoL(igaus)
+                        auxFl = ql(igaus,idime)*ul(igaus,jdime)
+                        aux = ul(igaus,idime)*ul(igaus,jdime)
                         Re_mom(igaus,idime) = Re_mom(igaus,idime) + 0.25_rp*(aux*gradRho(jdime)  &
                                                                   + ql(igaus,jdime)*gradU(idime,jdime)+ul(igaus,jdime)*gradQ(idime,jdime))
                      end do
