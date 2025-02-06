@@ -18,7 +18,7 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 4*24000
+	integer(4), parameter   :: nelem = 4*6000
 	integer(4), parameter   :: npoin = nelem * nnode
 	integer(4), allocatable :: connec(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
@@ -337,7 +337,9 @@ program main
 		!$acc kernels present(connec,u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
 		do ielem = 1,nelem
 			u(connec(ielem,1),:) = 10.0_rp
+			u(connec(ielem,4),:) = 20.0_rp
 			rho(connec(ielem,1)) = 10.0_rp
+			rho(connec(ielem,4)) = 20.0_rp
 			pr(connec(ielem,1))  = 10.0_rp
 			E(connec(ielem,1))   = 10.0_rp
 			Tem(connec(ielem,1))   = 10.0_rp
