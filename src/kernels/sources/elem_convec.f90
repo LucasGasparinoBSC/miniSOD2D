@@ -225,7 +225,7 @@
             Rener(:) = 0.0_rp
             !$acc end kernels
 
-            !$acc parallel loop gang private(ipoin,Re_ener,Re_mass,Re_mom,ul,ql,rhol,prl,El,REl,fl,fel,fuel,fuul,kl,Rkl,fkl,fukl) !!vector_length(vecLength)
+            !$acc parallel loop gang private(ipoin,Re_ener,Re_mass,Re_mom,ul,ql,rhol,prl,El,REl,fl,fel,fuel,kl,Rkl,fkl,fukl) !!vector_length(vecLength)
             do ielem = 1,nelem
                !$acc loop vector
                do inode = 1,nnode
@@ -251,12 +251,11 @@
                      !$acc loop seq
                      do jdime = 1,ndime
                         fl(inode,idime,jdime)  = q(ipoin(inode),idime)*u(ipoin(inode),jdime)
-                        fuul(inode,idime,jdime)  = u(ipoin(inode),idime)*u(ipoin(inode),jdime)
                      end do
                   end do
                end do
 
-               !$acc loop vector private(dlxi_ip,dleta_ip,dlzeta_ip, gradIsoRho,gradIsoP,gradIsoRE,gradIsoRk, gradIsoE, gradIsok,gradIsoU, gradIsoF, gradIsoFuu, gradIsoQ, gradIsoFe,gradIsoFue,gradIsoFk,gradIsoFuk,gradRho,gradP,gradE,gradRE,gradk,gradRk,gradU,divF,divU,divQ,divFe,divFue,divFk,divFuk,gradQ,divFuu)
+               !$acc loop vector private(dlxi_ip,dleta_ip,dlzeta_ip, gradIsoRho,gradIsoP,gradIsoRE,gradIsoRk, gradIsoE, gradIsok,gradIsoU, gradIsoF, gradIsoQ, gradIsoFe,gradIsoFue,gradIsoFk,gradIsoFuk,gradRho,gradP,gradE,gradRE,gradk,gradRk,gradU,divF,divU,divQ,divFe,divFue,divFk,divFuk,gradQ,divFuu)
                do igaus = 1,ngaus
                   !$acc loop seq
                   do ii=1,porder+1
@@ -276,7 +275,6 @@
                   gradIsoRk(:) = 0.0_rp              
                   gradIsoU(:,:) = 0.0_rp
                   gradIsoF(:,:,:) = 0.0_rp
-                  gradIsoFuu(:,:,:) = 0.0_rp
                   gradIsoQ(:,:) = 0.0_rp
                   gradIsoFe(:,:) = 0.0_rp
                   gradIsoFue(:,:) = 0.0_rp
@@ -307,7 +305,6 @@
                      gradIsoRk(1) = gradIsoRk(1) + dlxi_ip(ii)*(Rkl(invAtoIJK(ii,isoJ,isoK)))
                      gradIsoRk(2) = gradIsoRk(2) + dleta_ip(ii)*(Rkl(invAtoIJK(isoI,ii,isoK)))
                      gradIsoRk(3) = gradIsoRk(3) + dlzeta_ip(ii)*(Rkl(invAtoIJK(isoI,isoJ,ii)))
-
 
                      !$acc loop seq
                      do idime=1,ndime
@@ -340,9 +337,6 @@
                             gradIsoF(idime,jdime,1) = gradIsoF(idime,jdime,1) + dlxi_ip(ii)*fl(invAtoIJK(ii,isoJ,isoK),idime,jdime)
                             gradIsoF(idime,jdime,2) = gradIsoF(idime,jdime,2) + dleta_ip(ii)*fl(invAtoIJK(isoI,ii,isoK),idime,jdime)
                             gradIsoF(idime,jdime,3) = gradIsoF(idime,jdime,3) + dlzeta_ip(ii)*fl(invAtoIJK(isoI,isoJ,ii),idime,jdime)
-                            gradIsoFuu(idime,jdime,1) = gradIsoFuu(idime,jdime,1) + dlxi_ip(ii)*fuul(invAtoIJK(ii,isoJ,isoK),idime,jdime)
-                            gradIsoFuu(idime,jdime,2) = gradIsoFuu(idime,jdime,2) + dleta_ip(ii)*fuul(invAtoIJK(isoI,ii,isoK),idime,jdime)
-                            gradIsoFuu(idime,jdime,3) = gradIsoFuu(idime,jdime,3) + dlzeta_ip(ii)*fuul(invAtoIJK(isoI,isoJ,ii),idime,jdime)
                         end do
                      end do
                   end do
@@ -356,7 +350,6 @@
                   gradU(:,:) = 0.0_rp
                   gradQ(:,:) = 0.0_rp
                   divF(:) = 0.0_rp
-                  divFuu(:) = 0.0_rp
                   divQ = 0.0_rp
                   divFe = 0.0_rp
                   divFue = 0.0_rp
@@ -378,19 +371,19 @@
                          divFuk = divFuk + He(idime,jdime,igaus,ielem) * gradIsoFuk(idime,jdime)
                          !$acc loop seq
                          do kdime=1,ndime
+                            !aux = gradIsoF(idime,jdime,kdime)/rhol(igaus)
                             gradU(idime,jdime) = gradU(idime,jdime) + He(jdime,kdime,igaus,ielem) * gradIsoU(idime,kdime)
                             gradQ(idime,jdime) = gradQ(idime,jdime) + He(jdime,kdime,igaus,ielem) * gradIsoQ(idime,kdime)
                             divF(idime) = divF(idime) + He(jdime,kdime,igaus,ielem)*gradIsoF(idime,jdime,kdime)
-                            divFuu(idime) = divFuu(idime) + He(jdime,kdime,igaus,ielem)*gradIsoFuu(idime,jdime,kdime)
                          end do
                      end do
                   end do
                   divU  = gradU(1,1)  + gradU(2,2)  + gradU(3,3)
                   divQ  = gradQ(1,1)  + gradQ(2,2)  + gradQ(3,3) 
+                  divFuu(:) = divF(:)/rhol(igaus)
                   Re_mass(igaus) = 0.5_rp*(divQ+rhol(igaus)*divU) 
                   Re_ener(igaus) =0.25_rp*(divFe+El(igaus)*divQ+REl(igaus)*divU+rhol(igaus)*divFue) + &
                                   0.25_rp*(divFk+kl(igaus)*divQ+Rkl(igaus)*divU+rhol(igaus)*divFuk)
-                  aux = 0.0_rp
                   !$acc loop seq
                   do idime=1, ndime
                      Re_mom(igaus,idime) = 0.25_rp*(divF(idime)+ul(igaus,idime)*divQ+ql(igaus,idime)*divU+rhol(igaus)*divFuu(idime)) + gradP(idime)
@@ -401,7 +394,8 @@
                                                                 fukl(igaus,idime)*gradRho(idime)) 
                      !$acc loop seq
                      do jdime=1, ndime
-                        Re_mom(igaus,idime) = Re_mom(igaus,idime) + 0.25_rp*(fuul(igaus,idime,jdime)*gradRho(jdime)  &
+                        aux = fl(igaus,idime,jdime)/rhol(igaus)
+                        Re_mom(igaus,idime) = Re_mom(igaus,idime) + 0.25_rp*(aux*gradRho(jdime)  &
                                                                   + ql(igaus,jdime)*gradU(idime,jdime)+ul(igaus,jdime)*gradQ(idime,jdime))
                      end do
                      Re_mom(igaus,idime) = gpvol(1,igaus,ielem)*Re_mom(igaus,idime)

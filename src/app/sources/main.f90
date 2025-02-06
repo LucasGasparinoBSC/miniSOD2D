@@ -18,7 +18,7 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 4*20000
+	integer(4), parameter   :: nelem = 4*24000
 	integer(4), parameter   :: npoin = nelem * nnode
 	integer(4), allocatable :: connec(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
@@ -34,7 +34,7 @@ program main
 	! Loop variables
 	!
 	integer(4), parameter   :: nruns = 100
-	integer(4)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k
+	integer(4)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k, idime
 
 	!
 	! Case variables and residuals
@@ -323,7 +323,6 @@ program main
 	call nvtxStartRange("Generate initial conditions")
 	!$acc kernels present(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
 	u(:,:) = 1.0_rp
-	q(:,:) = 1.0_rp
 	rho(:) = 1.0_rp
 	pr(:)  = 1.0_rp
 	E(:)   = 1.0_rp
@@ -338,13 +337,20 @@ program main
 		!$acc kernels present(connec,u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
 		do ielem = 1,nelem
 			u(connec(ielem,1),:) = 10.0_rp
-			q(connec(ielem,1),:) = 10.0_rp
 			rho(connec(ielem,1)) = 10.0_rp
 			pr(connec(ielem,1))  = 10.0_rp
 			E(connec(ielem,1))   = 10.0_rp
 			Tem(connec(ielem,1))   = 10.0_rp
 		end do
 		!$acc end kernels
+
+		!$acc parallel loop collapse(2)
+		do ipoin = 1,npoin
+			do idime = 1,ndime
+				q(ipoin,idime) = rho(ipoin)*u(ipoin,idime)
+			end do
+		end do
+		!$acc end parallel loop
 
 	!
 	! Generate TET04 data
