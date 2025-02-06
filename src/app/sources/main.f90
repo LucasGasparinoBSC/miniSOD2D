@@ -34,12 +34,13 @@ program main
 	! Loop variables
 	!
 	integer(4), parameter   :: nruns = 100
-	integer(4)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k
+	integer(4)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k, idime
 
 	!
 	! Case variables and residuals
 	!
-	real(rp),   allocatable :: u(:,:), q(:,:), rho(:), pr(:), E(:), Tem(:)
+	real(rp)                :: fmag
+	real(rp),   allocatable :: u(:,:), q(:,:), rho(:), pr(:), E(:), Tem(:), eint(:)
 	real(rp),   allocatable :: Rmass(:), Rmom(:,:), Rener(:)
 	real(rp),   allocatable :: Dmass(:), Dmom(:,:), Dener(:)
 
@@ -48,11 +49,13 @@ program main
 	!
 	real(rp)                :: Cp, Pra
 	real(rp),   allocatable :: mu_fluid(:), mu_e(:,:), mu_sgs(:,:)
+	real(rp), parameter     :: gamma = 1.4_rp, Rgas = 287.0_rp
 
 	!
 	! Timing
 	!
 	real(8) :: tstart, tend, tconvec, tdiffu, tavg_convec, tavg_diffu, tmax_convec, tmax_diffu, tmin_convec, tmin_diffu
+	real(8) :: tconvec_split, tdiffu_split, tavg_convec_split, tavg_diffu_split, tmax_convec_split, tmax_diffu_split, tmin_convec_split, tmin_diffu_split
 	real(8) :: tconv_tet, tdiff_tet, tmax_convec_tet, tmax_diffu_tet, tmin_convec_tet, tmin_diffu_tet, tavg_convec_tet, tavg_diffu_tet
 
 	!
@@ -70,6 +73,7 @@ program main
 	real(rp)  , allocatable :: coord_t(:,:), He_t(:,:,:,:), gpvol_t(:,:,:), xyzTET(:,:)
 	real(rp)  , allocatable :: Ngp_t(:,:), dNgp_t(:,:,:)
 	real(rp)  , allocatable :: wgp_t(:), xgp_t(:,:)
+	real(rp),   allocatable :: Rmass_s(:), Rmom_s(:,:), Rener_s(:)
 	real(rp),   allocatable :: Rmass_t(:), Rmom_t(:,:), Rener_t(:)
 	real(rp),   allocatable :: Dmass_t(:), Dmom_t(:,:), Dener_t(:)
 	real(rp),   allocatable :: mu_e_t(:,:), mu_sgs_t(:,:)
@@ -313,15 +317,14 @@ program main
 	!
 	! Generate initial conditions
 	!
-	allocate(u(npoin,ndime), q(npoin,ndime), rho(npoin), pr(npoin), E(npoin), Tem(npoin))
+	allocate(u(npoin,ndime), q(npoin,ndime), rho(npoin), pr(npoin), E(npoin), Tem(npoin), eint(npoin))
 	allocate(mu_fluid(npoin), mu_e(nelem,nnode), mu_sgs(nelem,nnode))
 	call nvtxStartRange("Alloc GPU initial conditions")
-	!$acc enter data create(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
+	!$acc enter data create(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs,eint)
 	call nvtxEndRange
 	call nvtxStartRange("Generate initial conditions")
 	!$acc kernels present(u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
 	u(:,:) = 1.0_rp
-	q(:,:) = 1.0_rp
 	rho(:) = 1.0_rp
 	pr(:)  = 1.0_rp
 	E(:)   = 1.0_rp
@@ -336,13 +339,27 @@ program main
 		!$acc kernels present(connec,u,q,rho,pr,E,Tem,mu_fluid,mu_e,mu_sgs)
 		do ielem = 1,nelem
 			u(connec(ielem,1),:) = 10.0_rp
-			q(connec(ielem,1),:) = 10.0_rp
+			u(connec(ielem,4),:) = 20.0_rp
 			rho(connec(ielem,1)) = 10.0_rp
-			pr(connec(ielem,1))  = 10.0_rp
-			E(connec(ielem,1))   = 10.0_rp
-			Tem(connec(ielem,1))   = 10.0_rp
+			rho(connec(ielem,4)) = 20.0_rp
+			pr(connec(ielem,1))  = 100.0_rp
+			pr(connec(ielem,4))  = 200.0_rp
 		end do
 		!$acc end kernels
+
+		!$acc parallel loop gang vector
+		do ipoin = 1,npoin
+			fmag = 0.0_rp
+			!$acc loop seq
+			do idime = 1,ndime
+				q(ipoin,idime) = rho(ipoin)*u(ipoin,idime)
+				fmag = fmag + q(ipoin,idime)*u(ipoin,idime)
+			end do
+			eint(ipoin) = pr(ipoin)/((gamma-1.0_rp)*rho(ipoin))
+			E(ipoin) = rho(ipoin)*eint(ipoin) + 0.5_rp*fmag
+			Tem(ipoin) = pr(ipoin)/(rho(ipoin)*Rgas)
+		end do
+		!!$acc end parallel loop
 
 	!
 	! Generate TET04 data
@@ -400,21 +417,26 @@ program main
 	!
 	allocate(Rmass(npoin), Rmom(npoin,ndime), Rener(npoin))
 	allocate(Dmass(npoin), Dmom(npoin,ndime), Dener(npoin))
+	allocate(Rmass_s(npoin_t), Rmom_s(npoin_t,ndime), Rener_s(npoin_t))
 	allocate(Rmass_t(npoin_t), Rmom_t(npoin_t,ndime), Rener_t(npoin_t))
 	allocate(Dmass_t(npoin_t), Dmom_t(npoin_t,ndime), Dener_t(npoin_t))
 	!$acc enter data create(Rmass,Rmom,Rener,Dmass,Dmom,Dener)
+	!$acc enter data create(Rmass_s,Rmom_s,Rener_s)
 	!$acc enter data create(Rmass_t,Rmom_t,Rener_t,Dmass_t,Dmom_t,Dener_t)
 
 	open(unit=1,file='timers.dat',status='replace')
 	tavg_convec = 0.0d0
+	tavg_convec_split = 0.0d0
 	tavg_convec_tet = 0.0d0
 	tavg_diffu = 0.0d0
 	tavg_diffu_tet = 0.0d0
 	tmax_convec = 0.0d0
+	tmax_convec_split = 0.0d0
 	tmax_convec_tet = 0.0d0
 	tmax_diffu = 0.0d0
 	tmax_diffu_tet = 0.0d0
 	tmin_convec = 1000000.0d0
+	tmin_convec_split = 1000000.0d0
 	tmin_convec_tet = 1000000.0d0
 	tmin_diffu = 1000000.0d0
 	tmin_diffu_tet = 1000000.0d0
@@ -428,6 +450,16 @@ program main
 		tmax_convec = max(tmax_convec,tconvec)
 		tmin_convec = min(tmin_convec,tconvec)
 		tavg_convec = tavg_convec + tconvec
+		call nvtxEndRange
+
+		call nvtxStartRange("Call splited convective term")
+		tstart = MPI_Wtime()
+		call full_convec_ijk_split(nelem,npoin,connec,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,AtoI,AtoJ,AtoK,u,q,rho,pr,E,Rmass_s,Rmom_s,Rener_s)
+		tend = MPI_Wtime()
+		tconvec_split = tend-tstart
+		tmax_convec_split = max(tmax_convec_split,tconvec_split)
+		tmin_convec_split = min(tmin_convec_split,tconvec_split)
+		tavg_convec_split = tavg_convec_split + tconvec_split
 		call nvtxEndRange
 
 		call nvtxStartRange("Call convective term TET")
@@ -470,6 +502,7 @@ program main
 	! Write avg times to screen
 	!
 	tavg_convec = tavg_convec / real(nruns,8)
+	tavg_convec_split = tavg_convec_split / real(nruns,8)
 	tavg_convec_tet = tavg_convec_tet / real(nruns,8)
 	tavg_diffu = tavg_diffu / real(nruns,8)
 	tavg_diffu_tet = tavg_diffu_tet / real(nruns,8)
@@ -478,19 +511,23 @@ program main
 	write(*,*) 'Timings:'
 	write(*,*) '----------------------------------------'
 	write(*,*) 'Avg. convective time     = ', tavg_convec
+	write(*,*) 'Avg. split convective time = ', tavg_convec_split
 	write(*,*) 'Avg. TET convective time = ', tavg_convec_tet
 	write(*,*) 'Avg. diffusive time      = ', tavg_diffu
 	write(*,*) 'Avg. TET diffusive time  = ', tavg_diffu_tet
 	write(*,*) 'Max. convective time     = ', tmax_convec
+	write(*,*) 'Max. split convective time = ', tmax_convec_split
 	write(*,*) 'Max. TET convective time = ', tmax_convec_tet
 	write(*,*) 'Max. diffusive time      = ', tmax_diffu
 	write(*,*) 'Max. TET diffusive time  = ', tmax_diffu_tet
 	write(*,*) 'Min. convective time     = ', tmin_convec
+	write(*,*) 'Min. split convective time     = ', tmin_convec_split
 	write(*,*) 'Min. TET convective time = ', tmin_convec_tet
 	write(*,*) 'Min. diffusive time      = ', tmin_diffu
 	write(*,*) 'Min. TET diffusive time  = ', tmin_diffu_tet
 	write(*,*) '----------------------------------------'
 	write(*,*) 'Variation convec.        = ', (tmax_convec-tmin_convec)/tavg_convec
+	write(*,*) 'Variation split convec.  = ', (tmax_convec_split-tmin_convec_split)/tavg_convec_split
 	write(*,*) 'Variation TET convec.    = ', (tmax_convec_tet-tmin_convec_tet)/tavg_convec_tet
 	write(*,*) 'Variation diffu.         = ', (tmax_diffu-tmin_diffu)/tavg_diffu
 	write(*,*) 'Variation TET diffu.     = ', (tmax_diffu_tet-tmin_diffu_tet)/tavg_diffu_tet
@@ -501,6 +538,7 @@ program main
 	!
 	call nvtxStartRange("Update host results")
 	!$acc update host(Rmass,Rmom,Rener,Dmass,Dmom,Dener)
+	!$acc update host(Rmass_s,Rmom_s,Rener_s)
 	!$acc update host(Rmass_t,Rmom_t,Rener_t,Dmass_t,Dmom_t,Dener_t)
 	call nvtxEndRange
 	write(*,*)
@@ -512,6 +550,13 @@ program main
 	write(*,*) 'Max Rmom(:,2) = ', maxval(Rmom(:,2)), 'Min Rmom(:,2) = ', minval(Rmom(:,2))
 	write(*,*) 'Max Rmom(:,3) = ', maxval(Rmom(:,3)), 'Min Rmom(:,3) = ', minval(Rmom(:,3))
 	write(*,*) 'Max Rener     = ', maxval(Rener)    , 'Min Rener     = ', minval(Rener)
+	write(*,*) '----------------------------------------'
+	write(*,*) '--| Convec_split'
+	write(*,*) 'Max Rmass     = ', maxval(Rmass_s)    , 'Min Rmass     = ', minval(Rmass_s)
+	write(*,*) 'Max Rmom(:,1) = ', maxval(Rmom_s(:,1)), 'Min Rmom(:,1) = ', minval(Rmom_s(:,1))
+	write(*,*) 'Max Rmom(:,2) = ', maxval(Rmom_s(:,2)), 'Min Rmom(:,2) = ', minval(Rmom_s(:,2))
+	write(*,*) 'Max Rmom(:,3) = ', maxval(Rmom_s(:,3)), 'Min Rmom(:,3) = ', minval(Rmom_s(:,3))
+	write(*,*) 'Max Rener     = ', maxval(Rener_s)    , 'Min Rener     = ', minval(Rener_s)
 	write(*,*) '----------------------------------------'
 	write(*,*) '--| Diffu'
 	write(*,*) 'Max Dmass     = ', maxval(Dmass)    , 'Min Dmass     = ', minval(Dmass)
