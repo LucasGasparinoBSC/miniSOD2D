@@ -11,9 +11,9 @@ module mod_mesh
 		subroutine create_mesh(nelem,npoin,xyzBase,connec,xyz)
 
 			implicit none
-			integer(4), intent(in)  :: nelem, npoin
+			integer(ip), intent(in)  :: nelem, npoin
 			real(rp),   intent(in)  :: xyzBase(nnode,ndime)
-			integer(4), intent(out) :: connec(nelem,nnode)
+			integer(ip), intent(out) :: connec(nelem,nnode)
 			real(rp),   intent(out) :: xyz(npoin,ndime)
 
 			call nvtxStartRange("create_mesh")
@@ -26,9 +26,9 @@ module mod_mesh
 		subroutine gen_connectivity(nelem,connec)
 
 			implicit none
-			integer(4), intent(in)  :: nelem
-			integer(4), intent(out) :: connec(nelem,nnode)
-			integer(4)              :: ielem, inode
+			integer(ip), intent(in)  :: nelem
+			integer(ip), intent(out) :: connec(nelem,nnode)
+			integer(ip)              :: ielem, inode
 
 			call nvtxStartRange("gen_connectivity")
 			do ielem = 1, nelem
@@ -43,10 +43,10 @@ module mod_mesh
 		subroutine gen_coordinates(nelem,npoin,connec,xyzBase,xyz)
 
 			implicit none
-			integer(4), intent(in)    :: nelem, npoin, connec(nelem,nnode)
+			integer(ip), intent(in)    :: nelem, npoin, connec(nelem,nnode)
 			real(rp),   intent(in)    :: xyzBase(nnode,ndime)
 			real(rp),   intent(out)   :: xyz(npoin,ndime)
-			integer(4)                :: ielem, inode, idime, ipoin
+			integer(ip)                :: ielem, inode, idime, ipoin
 			real(rp)                  :: xyz0
 
 			xyz0 = 0.0_rp
@@ -71,9 +71,9 @@ module mod_mesh
 		subroutine gen_tet_mesh(nelem,npoin,xyzBase,connec,xyz)
 
 			implicit none
-			integer(4), intent(in)  :: nelem, npoin
+			integer(ip), intent(in)  :: nelem, npoin
 			real(rp),   intent(in)  :: xyzBase(4,ndime)
-			integer(4), intent(out) :: connec(nelem,4)
+			integer(ip), intent(out) :: connec(nelem,4)
 			real(rp),   intent(out) :: xyz(npoin,ndime)
 
 			call nvtxStartRange("create_tet_mesh")
@@ -86,9 +86,9 @@ module mod_mesh
 		subroutine gen_tet_connectivity(nelem,connec)
 
 			implicit none
-			integer(4), intent(in)  :: nelem
-			integer(4), intent(out) :: connec(nelem,4)
-			integer(4)              :: ielem, inode
+			integer(ip), intent(in)  :: nelem
+			integer(ip), intent(out) :: connec(nelem,4)
+			integer(ip)              :: ielem, inode
 
 			call nvtxStartRange("gen_tet_connectivity")
 			do ielem = 1, nelem
@@ -103,10 +103,10 @@ module mod_mesh
 		subroutine gen_tet_coordinates(nelem,npoin,connec,xyzBase,xyz)
 
 			implicit none
-			integer(4), intent(in)    :: nelem, npoin, connec(nelem,4)
+			integer(ip), intent(in)    :: nelem, npoin, connec(nelem,4)
 			real(rp),   intent(in)    :: xyzBase(4,ndime)
 			real(rp),   intent(out)   :: xyz(npoin,ndime)
-			integer(4)                :: ielem, inode, idime, ipoin
+			integer(ip)                :: ielem, inode, idime, ipoin
 			real(rp)                  :: xyz0
 
 			xyz0 = 0.0_rp

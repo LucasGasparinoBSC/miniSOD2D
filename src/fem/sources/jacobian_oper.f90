@@ -12,11 +12,11 @@ module jacobian_oper
 
 						implicit none
 
-						integer(4), intent(in)  :: nelem, npoin
-						integer(4), intent(in)  :: connec(nelem,nnode)
+						integer(ip), intent(in)  :: nelem, npoin
+						integer(ip), intent(in)  :: connec(nelem,nnode)
 						real(rp),   intent(in)  :: coord(npoin,ndime), dNgp(ndime,nnode,ngaus), wgp(ngaus)
 						real(rp),   intent(out) :: gpvol(1,ngaus,nelem), He(ndime,ndime,ngaus,nelem)
-						integer(4)              :: idime, jdime, inode, ielem, igaus
+						integer(ip)              :: idime, jdime, inode, ielem, igaus
 						real(rp)                :: Je(ndime,ndime), a(9), b(9)
 
 						!
@@ -143,11 +143,11 @@ module jacobian_oper
 
 						implicit none
 
-						integer(4), intent(in)  :: nelem, npoin
-						integer(4), intent(in)  :: connec(nelem,4)
+						integer(ip), intent(in)  :: nelem, npoin
+						integer(ip), intent(in)  :: connec(nelem,4)
 						real(rp),   intent(in)  :: coord(npoin,ndime), dNgp(ndime,4,4), wgp(4)
 						real(rp),   intent(out) :: gpvol(1,4,nelem), He(ndime,ndime,4,nelem)
-						integer(4)              :: idime, jdime, inode, ielem, igaus
+						integer(ip)              :: idime, jdime, inode, ielem, igaus
 						real(rp)                :: Je(ndime,ndime), a(9), b(9)
 
 						!

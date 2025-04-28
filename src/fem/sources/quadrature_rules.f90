@@ -16,9 +16,9 @@ contains
 		!> @param[out] wgp Quadrature weights
 		subroutine GaussLobattoLegendre_qua(mporder,mnpbou,atoIJ,xgp,wgp)
 			implicit none
-			integer(4),intent(in) :: mporder,mnpbou,atoIJ(mnpbou)
+			integer(ip),intent(in) :: mporder,mnpbou,atoIJ(mnpbou)
 			real(rp),intent(out)  :: xgp(mnpbou,ndime-1),wgp(mnpbou)
-			integer(4)            :: inode,i,j,lorder(mporder+1)
+			integer(ip)            :: inode,i,j,lorder(mporder+1)
 			real(rp)              :: xi(mporder+1),w1d(mporder+1)
 
 			call getGaussLobattoLegendre_weights_and_roots(mporder,w1d,xi)
@@ -55,9 +55,9 @@ contains
 			! w_j = int(l^n_i(xi_j),-1,1).             !
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			implicit none
-			integer(4),intent(in) :: mporder,mngaus,atoIJK(mngaus)
+			integer(ip),intent(in) :: mporder,mngaus,atoIJK(mngaus)
 			real(rp),intent(out)  :: xgp(mngaus,ndime),wgp(mngaus)
-			integer(4)            :: inode,i,j,k,lorder(mporder+1)
+			integer(ip)            :: inode,i,j,k,lorder(mporder+1)
 			real(rp)              :: xi(mporder+1),w1d(mporder+1),w0,w1,w2,w3
 
 			call getGaussLobattoLegendre_weights_and_roots(mporder,w1d,xi)

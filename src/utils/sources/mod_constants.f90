@@ -3,20 +3,21 @@ module mod_constants
 	implicit none
 
 	integer(4), parameter :: rp = 4 !(4/8)
+	integer(4), parameter :: ip = 4 !(4/8)
 	integer(4), parameter :: rp_vtk = 4 !(4/8)
 
 	!
 	! Dimensions
 	!
-	integer(4), parameter :: ndime=3
+	integer(ip), parameter :: ndime=3
 
 	!
 	! Element characteristics
 	!
-	integer(4), parameter :: porder=4
-	integer(4), parameter :: nnode=(porder+1)**3
-	integer(4), parameter :: ngaus=nnode
-	integer(4), parameter :: npbou=(porder+1)**2
+	integer(ip), parameter :: porder=4
+	integer(ip), parameter :: nnode=(porder+1)**3
+	integer(ip), parameter :: ngaus=nnode
+	integer(ip), parameter :: npbou=(porder+1)**2
 
 	!
 	! Other constants

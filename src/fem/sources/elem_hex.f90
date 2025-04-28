@@ -5,9 +5,9 @@ use mod_maths
 
 implicit none
 
-!integer(4), parameter :: hex_order_edges(12,2) = transpose(reshape([1,2,1,4,1,5,2,3,2,6,3,4,3,7,4,8,5,6,5,8,6,7,7,8],(/2,12/)))
-!integer(4), parameter :: hex_order_faces(6,4)  = transpose(reshape([1,4,3,2,1,2,6,5,1,5,8,4,2,3,7,6,3,4,8,7,5,6,7,8],(/4,6/)))
-integer(4), allocatable :: hex_order_edges(:,:), hex_order_faces(:,:)
+!integer(ip), parameter :: hex_order_edges(12,2) = transpose(reshape([1,2,1,4,1,5,2,3,2,6,3,4,3,7,4,8,5,6,5,8,6,7,7,8],(/2,12/)))
+!integer(ip), parameter :: hex_order_faces(6,4)  = transpose(reshape([1,4,3,2,1,2,6,5,1,5,8,4,2,3,7,6,3,4,8,7,5,6,7,8],(/4,6/)))
+integer(ip), allocatable :: hex_order_edges(:,:), hex_order_faces(:,:)
 
 contains
 
@@ -29,9 +29,9 @@ contains
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 		implicit none
-		integer(4),intent(in) :: mporder,mnnode
+		integer(ip),intent(in) :: mporder,mnnode
 		real(rp),intent(in)   :: xi, eta, zeta
-		integer(4),intent(in) :: atoIJK(mnnode)
+		integer(ip),intent(in) :: atoIJK(mnnode)
 		real(rp),intent(out)  :: N(mnnode), dN(ndime,mnnode),dlxigp_ip(ndime,mporder+1)
 		real(rp),intent(out)  :: N_lagrange(mnnode), dN_lagrange(ndime,mnnode)
 		real(rp)              :: xi_grid(mporder+1)
@@ -47,12 +47,12 @@ contains
 	subroutine hexa_edges(mnnode,ielem,nelem,npoin,connec,coord,ncorner,nedge,dist)
 		implicit none
 		
-		integer(4), intent(in)   :: mnnode,iElem, nelem, npoin
-		integer(4), intent(in)   :: connec(nelem,mnnode)
+		integer(ip), intent(in)   :: mnnode,iElem, nelem, npoin
+		integer(ip), intent(in)   :: connec(nelem,mnnode)
 		real(rp),   intent(in)   :: coord(npoin,ndime)
-		integer(4), intent(out)  :: ncorner,nedge
+		integer(ip), intent(out)  :: ncorner,nedge
 		real(rp),   intent(out)  :: dist(12,ndime)
-		integer(4)               :: ind(mnnode)
+		integer(ip)               :: ind(mnnode)
 		real(rp)                 :: xp(12,ndime)
 		
 		ind = connec(ielem,:)

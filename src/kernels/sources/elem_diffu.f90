@@ -10,19 +10,19 @@ module elem_diffu
               subroutine full_diffusion_ijk(nelem,npoin,connec,Ngp,dNgp,He,gpvol,dlxigp_ip,xgp,invAtoIJK,gmshAtoI,gmshAtoJ,gmshAtoK,Cp,Pr,rho,u,Tem,mu_fluid,mu_e,mu_sgs,Rmass,Rmom,Rener)
                       implicit none
 
-                      integer(4), intent(in)  :: nelem, npoin
-                      integer(4), intent(in)  :: connec(nelem,nnode)
+                      integer(ip), intent(in)  :: nelem, npoin
+                      integer(ip), intent(in)  :: connec(nelem,nnode)
                       real(rp),   intent(in)  :: Ngp(ngaus,nnode), dNgp(ndime,nnode,ngaus)
                       real(rp),   intent(in)  :: He(ndime,ndime,ngaus,nelem),xgp(ngaus,ndime),dlxigp_ip(ngaus,ndime,porder+1)
                       real(rp),   intent(in)  :: gpvol(1,ngaus,nelem)
-                      integer(4), intent(in)  :: invAtoIJK(porder+1,porder+1,porder+1),gmshAtoI(nnode), gmshAtoJ(nnode), gmshAtoK(nnode)
+                      integer(ip), intent(in)  :: invAtoIJK(porder+1,porder+1,porder+1),gmshAtoI(nnode), gmshAtoJ(nnode), gmshAtoK(nnode)
                       real(rp),   intent(in)  :: Cp,Pr,rho(npoin),u(npoin,ndime), Tem(npoin), mu_e(nelem,ngaus), mu_sgs(nelem,ngaus)
                       real(rp),   intent(in)  :: mu_fluid(npoin)
                       real(rp),   intent(out) :: Rmass(npoin)
                       real(rp),   intent(out) :: Rmom(npoin,ndime)
                       real(rp),   intent(out) :: Rener(npoin)
-                      integer(4)              :: ielem, igaus, inode, idime, jdime, isoI, isoJ, isoK,kdime,ii
-                      integer(4)              :: ipoin(nnode)
+                      integer(ip)              :: ielem, igaus, inode, idime, jdime, isoI, isoJ, isoK,kdime,ii
+                      integer(ip)              :: ipoin(nnode)
                       real(rp)                :: kappa_e, mu_fgp, mu_egp,divU, tauU(ndime), twoThirds,nu_e,tau(ndime,ndime)
                       real(rp)                :: gradU(ndime,ndime), gradT(ndime),tmp1,vol,arho
                       real(rp)                :: gradIsoRho(ndime),gradIsoT(ndime),gradIsoU(ndime,ndime)
@@ -198,8 +198,8 @@ module elem_diffu
 
               subroutine fem_diffu(nelem,npoin,connec,Ngp,dNgp,He,gpvol,Cp,Pr,rho,u,Tem,mu_fluid,mu_e,mu_sgs,Rmass,Rmom,Rener)
                   implicit none
-                  integer(4), intent(in)  :: nelem, npoin
-                  integer(4), intent(in)  :: connec(nelem,4)
+                  integer(ip), intent(in)  :: nelem, npoin
+                  integer(ip), intent(in)  :: connec(nelem,4)
                   real(rp),   intent(in)  :: Ngp(4,4), dNgp(ndime,4,4)
                   real(rp),   intent(in)  :: He(ndime,ndime,4,nelem)
                   real(rp),   intent(in)  :: gpvol(1,4,nelem)
@@ -208,7 +208,7 @@ module elem_diffu
                   real(rp),   intent(out) :: Rmass(npoin)
                   real(rp),   intent(out) :: Rmom(npoin,ndime)
                   real(rp),   intent(out) :: Rener(npoin)
-                  integer(4)              :: ielem, igaus, inode, idime, jdime, jnode
+                  integer(ip)              :: ielem, igaus, inode, idime, jdime, jnode
                   real(rp)                :: divU, tauU(ndime), tau(ndime,ndime)
                   real(rp)                :: gradU(ndime,ndime), gradT(ndime), gradRho(ndime), gpcar(4,ndime)
                   real(rp)                :: Re_mass(4), Re_ener(4), Re_mom(4,ndime), auxRho, auxU, auxMu, auxNu, auxKappa

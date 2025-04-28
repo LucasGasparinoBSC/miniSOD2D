@@ -16,7 +16,7 @@ use mod_constants
 
 		!----------------------------------------------------------------------------------
 		subroutine getGaussLobattoLegendre_roots(mporder,roots)
-			integer(4),intent(in) :: mporder
+			integer(ip),intent(in) :: mporder
 			real(rp),dimension(mporder+1),intent(out) :: roots
 			real(8),dimension(mporder+1) :: roots_d,legendre_aux
 
@@ -29,7 +29,7 @@ use mod_constants
 
 		!----------------------------------------------------------------------------------
 		subroutine getGaussLobattoLegendre_weights_and_roots(mporder,weights,roots)
-			integer(4),intent(in) :: mporder
+			integer(ip),intent(in) :: mporder
 			real(rp),dimension(mporder+1),intent(out) :: weights,roots
 			real(8),dimension(mporder+1) :: roots_d,weights_d,legendre_aux
 
@@ -164,9 +164,9 @@ use mod_constants
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			!
 			implicit none
-			integer(4),intent(in) :: mporder
+			integer(ip),intent(in) :: mporder
 			real(rp),intent(out) :: xi_equi(mporder+1)
-			integer(4) :: i
+			integer(ip) :: i
 
 			do i = 1,mporder+1
 				xi_equi(i) = -1.0_rp+(2.0_rp*real(i-1,rp)/real(mporder,rp))
@@ -191,10 +191,10 @@ use mod_constants
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 			implicit none
-			integer(4),intent(in) :: mporder
+			integer(ip),intent(in) :: mporder
 			real(rp),intent(in)   :: xi(mporder+1), xi_p
 			real(rp),intent(out)  :: l_ip(mporder+1)
-			integer(4)            :: i, j, lorder(mporder+1)
+			integer(ip)            :: i, j, lorder(mporder+1)
 
 			lorder(1) = 1
 			lorder(2) = mporder+1
@@ -228,10 +228,10 @@ use mod_constants
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 			implicit none
-			integer(4),intent(in) :: mporder
+			integer(ip),intent(in) :: mporder
 			real(rp),intent(in)   :: xi(mporder+1), xi_p
 			real(rp),intent(out)  :: dl_ip(mporder+1)
-			integer(4)            :: i, j, m, lorder(mporder+1)
+			integer(ip)            :: i, j, m, lorder(mporder+1)
 			real(rp)              :: aux
 
 			lorder(1) = 1
@@ -260,11 +260,11 @@ use mod_constants
 
 			implicit none
 
-			integer(4),intent(in)         :: mporder,mnnode,atoIJK(mnnode)
+			integer(ip),intent(in)         :: mporder,mnnode,atoIJK(mnnode)
 			real(rp),intent(in)           :: s,t,z,xi_grid(mporder+1)
 			real(rp),intent(out)          :: N(mnnode),dN(ndime,mnnode)
 			real(rp),optional,intent(out) :: dlxigp_ip(ndime,mporder+1)
-			integer(4)                    :: i,j,k,c
+			integer(ip)                    :: i,j,k,c
 			real(rp),dimension(mporder+1) :: lxi_ip, leta_ip, lzeta_ip
 			real(rp),dimension(mporder+1) :: dlxi_ip, dleta_ip, dlzeta_ip
 
@@ -310,10 +310,10 @@ use mod_constants
 
 			implicit none
 
-			integer(4), intent(in)       :: mporder,mnpbou,atoIJ(mnpbou)
+			integer(ip), intent(in)       :: mporder,mnpbou,atoIJ(mnpbou)
 			real(rp), intent(in)         :: s, t, xi_grid(mporder+1)
 			real(rp), intent(out)        :: N(mnpbou), dN(ndime-1,mnpbou)
-			integer(4)                   :: i, j, c
+			integer(ip)                   :: i, j, c
 			real(rp), dimension(mporder+1) :: lxi_ip, leta_ip
 			real(rp), dimension(mporder+1) :: dlxi_ip, dleta_ip
 
@@ -351,10 +351,10 @@ use mod_constants
 			
 			implicit none
 	
-			integer(4),intent(in) :: mnnode
+			integer(ip),intent(in) :: mnnode
 			real(rp),intent(in)   :: var(mnnode),Neval(mnnode)
 			real(rp),intent(out)  :: var_a
-			integer(4)            :: inode
+			integer(ip)            :: inode
 	
 			var_a = 0.0_rp
 			do inode = 1,mnnode

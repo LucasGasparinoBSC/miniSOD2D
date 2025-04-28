@@ -5,21 +5,21 @@ module mod_numerical_params
     implicit none
 
         ! Time integration algorithm
-        integer(4)  :: flag_rk_order=4 
-        integer(4)  :: flag_implicit=0 !Explicit: RK, Implicit: BDF2
+        integer(ip)  :: flag_rk_order=4 
+        integer(ip)  :: flag_implicit=0 !Explicit: RK, Implicit: BDF2
 
 
         ! LES 
-        integer(4)  :: flag_les=0
-        integer(4)  :: flag_les_ilsa=0
+        integer(ip)  :: flag_les=0
+        integer(ip)  :: flag_les_ilsa=0
         real(rp) :: c_sgs = 0.025_rp
         real(rp) :: stau   = 0.022_rp
         real(rp) :: T_ilsa = 1.0_rp
 
         ! Discretization parameters
-        integer(4)  :: flag_solver_type=1    ! 1 = Lumped, 2 = APINV, 3 = CG
-        integer(4)  :: flag_spectralElem=1  ! 0 for Lagrange type, 1 for Chebyshev type
-        integer(4)  :: flag_normalise_entropy=1
+        integer(ip)  :: flag_solver_type=1    ! 1 = Lumped, 2 = APINV, 3 = CG
+        integer(ip)  :: flag_spectralElem=1  ! 0 for Lagrange type, 1 for Chebyshev type
+        integer(ip)  :: flag_normalise_entropy=1
         real(rp) :: ce = 0.1_rp   
         real(rp) :: cmax = 0.5_rp 
         real(rp) :: cglob =1.0_rp
@@ -31,12 +31,12 @@ module mod_numerical_params
         real(rp)    :: pseudo_max_dt = 1e20
         real(rp)    :: pseudo_cfl = 1.0_rp
         real(rp)    :: pseudo_ftau= 8.0_rp
-        integer(4) ::  maxIter=20
-        integer(4) ::  maxIterNonLineal=20
-        integer(4) ::  pseudo_steps=10
+        integer(ip) ::  maxIter=20
+        integer(ip) ::  maxIterNonLineal=20
+        integer(ip) ::  pseudo_steps=10
         real(8)   ::  tol=1e-4
-        integer(4) :: flag_use_constant_dt = 0
-        integer(4) :: flag_implicit_repeat_dt_if_not_converged = 1
+        integer(ip) :: flag_use_constant_dt = 0
+        integer(ip) :: flag_implicit_repeat_dt_if_not_converged = 1
 
         !
         ! Reference conditions
@@ -81,7 +81,7 @@ module mod_numerical_params
         ! Wall model averaging
         !
         real(rp)    :: period_walave   = 1.0_rp
-        integer(4)  :: flag_walave     = 0
-        integer(4)  :: flag_walex      = 3
+        integer(ip)  :: flag_walave     = 0
+        integer(ip)  :: flag_walex      = 3
 
 end module mod_numerical_params

@@ -18,23 +18,23 @@ program main
 	!
 	! Mesh vars not in mod_constants
 	!
-	integer(4), parameter   :: nelem = 4*48000
-	integer(4), parameter   :: npoin = nelem * nnode
-	integer(4), allocatable :: connec(:,:)
+	integer(ip), parameter   :: nelem = 4*6000
+	integer(ip), parameter   :: npoin = nelem * nnode
+	integer(ip), allocatable :: connec(:,:)
 	real(rp)  , allocatable :: coord(:,:), He(:,:,:,:), gpvol(:,:,:)
 
 	!
 	! Element characteristics
 	!
-	integer(4), allocatable :: gmshIJK(:,:), invAtoIJK(:,:,:), AtoIJK(:), AtoI(:), AtoJ(:), AtoK(:), gmsh2sodIJK(:,:)
+	integer(ip), allocatable :: gmshIJK(:,:), invAtoIJK(:,:,:), AtoIJK(:), AtoI(:), AtoJ(:), AtoK(:), gmsh2sodIJK(:,:)
 	real(rp)  , allocatable :: Ngp(:,:), Ngp_l(:,:), dNgp(:,:,:), dNgp_l(:,:,:), dlxigp_ip(:,:,:)
 	real(rp)  , allocatable :: wgp(:), xgp(:,:)
 
 	!
 	! Loop variables
 	!
-	integer(4), parameter   :: nruns = 100
-	integer(4)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k, idime
+	integer(ip), parameter   :: nruns = 100
+	integer(ip)              :: ielem, inode, igaus, ipoin, iorder, jnode, i, j, k, idime
 
 	!
 	! Case variables and residuals
@@ -61,15 +61,15 @@ program main
 	!
 	! MPI vars
 	!
-	integer(4) :: ierr, myrank, nprocs
+	integer(ip) :: ierr, myrank, nprocs
 
 	!
 	! Tetra variables
 	!
-	integer(4), parameter   :: nnode_t = 4
-	integer(4), parameter   :: ngaus_t = 4
-	integer(4)              :: npoin_t, nelem_t
-	integer(4), allocatable :: connec_t(:,:)
+	integer(ip), parameter   :: nnode_t = 4
+	integer(ip), parameter   :: ngaus_t = 4
+	integer(ip)              :: npoin_t, nelem_t
+	integer(ip), allocatable :: connec_t(:,:)
 	real(rp)  , allocatable :: coord_t(:,:), He_t(:,:,:,:), gpvol_t(:,:,:), xyzTET(:,:)
 	real(rp)  , allocatable :: Ngp_t(:,:), dNgp_t(:,:,:)
 	real(rp)  , allocatable :: wgp_t(:), xgp_t(:,:)

@@ -10,10 +10,10 @@ use elem_hex ! Using only the ordering tables for edges and faces
 
 		recursive subroutine genHighOrderHex(p,indexTable)
 			implicit none
-			integer(4), intent(in)  :: p
-			integer(4), intent(out) :: indexTable((p+1)**3,3) ! Set as I, J, K
-			integer(4)              :: tableFace((p-1)**2,2), tableVolume((p-1)**3,3)
-			integer(4)              :: inode, iedge, iface, i0, i1, i3, u(3), v(3), i
+			integer(ip), intent(in)  :: p
+			integer(ip), intent(out) :: indexTable((p+1)**3,3) ! Set as I, J, K
+			integer(ip)              :: tableFace((p-1)**2,2), tableVolume((p-1)**3,3)
+			integer(ip)              :: inode, iedge, iface, i0, i1, i3, u(3), v(3), i
 
 			! Initialize corner node to 0th position, or generate element of order 0
 			indexTable(1,:) = [0,0,0]
@@ -65,10 +65,10 @@ use elem_hex ! Using only the ordering tables for edges and faces
 
 		recursive subroutine genHighOrderQuad(p,indexTable)
 			implicit none
-			integer(4), intent(in)  :: p
-			integer(4), intent(out) :: indexTable((p+1)**2,2) ! Set as I, J
-			integer(4)              :: tableFace((p-1)**2,2)
-			integer(4)              :: inode, iedge, iface, i0, i1, u(2), i
+			integer(ip), intent(in)  :: p
+			integer(ip), intent(out) :: indexTable((p+1)**2,2) ! Set as I, J
+			integer(ip)              :: tableFace((p-1)**2,2)
+			integer(ip)              :: inode, iedge, iface, i0, i1, u(2), i
 
 			indexTable(1,:) = [0,0]
 			if (p .gt. 0) then
@@ -95,10 +95,10 @@ use elem_hex ! Using only the ordering tables for edges and faces
 
 		subroutine joinTables(size1,table1,indexDesti,size2,table2)
 			implicit none
-			integer(4), intent(in)    :: indexDesti, size1(2), size2(2)
-			integer(4), intent(in)    :: table1(size1(1),size1(2))
-			integer(4), intent(inout) :: table2(size2(1),size2(2))
-			integer(4)                :: i, j
+			integer(ip), intent(in)    :: indexDesti, size1(2), size2(2)
+			integer(ip), intent(in)    :: table1(size1(1),size1(2))
+			integer(ip), intent(inout) :: table2(size2(1),size2(2))
+			integer(ip)                :: i, j
 
 			j = indexDesti
 			do i = 1,size1(1)
