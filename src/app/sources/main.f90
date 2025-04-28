@@ -61,7 +61,7 @@ program main
 	!
 	! MPI vars
 	!
-	integer(ip) :: ierr, myrank, nprocs
+	integer(4) :: ierr, myrank, nprocs
 
 	!
 	! Tetra variables

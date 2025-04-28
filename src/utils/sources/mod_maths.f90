@@ -53,7 +53,7 @@ use mod_constants
 			!implicit double precision (A-H,O-Z)                               
 			implicit real(8) (A-H,O-Z)
 			dimension ET(0:*), VN(0:*)                                        
-			integer:: N, N2, I, IT
+			integer(ip) :: N, N2, I, IT
 			if (N .EQ. 0) return                                              
 				N2 = (N-1)/2                                                   
 				SN = DFLOAT(2*N-4*N2-3)                                        
@@ -92,7 +92,7 @@ use mod_constants
 			!IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 			implicit real(8) (A-H,O-Z)
 			dimension ET(0:*), VN(0:*), WT(0:*)
-			integer:: N, N2, I
+			integer(ip) :: N, N2, I
 			if(N .EQ. 0) return
 				N2 = (N-1)/2                                                  
 				DN = DFLOAT(N)                                                
@@ -122,7 +122,7 @@ use mod_constants
 		!*************************************************************
 			!implicit double precision (A-H,O-Z)
 			implicit real(8) (A-H,O-Z)
-			integer :: N, i
+			integer(ip) :: N, i
 
 			Y   = 1.D0
 			DY  = 0.D0
