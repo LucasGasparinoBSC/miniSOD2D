@@ -68,9 +68,9 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel" OR CMAKE_C_COMPILER_ID STREQUAL "Int
 elseif(CMAKE_C_COMPILER_ID STREQUAL "NVHPC" OR CMAKE_C_COMPILER_ID STREQUAL "PGI")
 	message("-- NVHPC compiler detected")
 	# Common NVHPC+MPI flags
-	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-cpp -lstdc++ -D_USE_NVTX -lnvToolsExt -cuda -Minfo=accel")
-	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-cpp -lstdc++ -D_USE_NVTX -lnvToolsExt -cuda -Minfo=accel")
-	set(CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS} "-cpp -lstdc++ -D_USE_NVTX -lnvToolsExt -cuda -Minfo=accel")
+	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-cpp -lstdc++ -D_USE_NVTX -cuda -Minfo=accel")
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-cpp -lstdc++ -D_USE_NVTX -cuda -Minfo=accel")
+	set(CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS} "-cpp -lstdc++ -D_USE_NVTX -lnvtx3interop -cuda -Minfo=accel")
 	# Debug
 	set(CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} "-Minform=inform -C -traceback -Ktrap=fp")
 	set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} "-Minform=inform -C -Mchkstk -traceback -Ktrap=fp")
